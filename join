@@ -1,0 +1,282 @@
+<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="//imgcache.qq.com/open/qcloud/js/vod/sdk/ugcUploader.js"></script>
+<script src="//imgcache.qq.com/open/qcloud/video/vcplayer/TcPlayer-2.2.1.js" charset="utf-8"></script>
+
+{template 'blue/header'}
+{template 'blue/sider'}
+
+
+
+<div class="fee_feedback_wrapper bg-blue4 pd-10">
+    <form id="formID" class=" pd-b-15 bg-bw-white">
+        <div>      
+            <ul class="fd_list2">
+                <li>
+                    <div class="tlt">选手姓名</div>
+                    <div class="cont"><input name="name"  type="text" placeholder="请输入姓名或昵称" class="tx"></div>
+                </li>
+                <li>
+                    <div class="tlt">参赛宣言</div>
+                    <div class="cont"><textarea name="introduction" class="ta" cols="" placeholder="一句话描述自己的参赛宣言"></textarea></div>
+                </li>
+                {php echo $tplappye[0];}
+            </ul>
+            <div class="divbaoming4">
+              <div class="dlist1"> 选择上传一个3分钟内的视频<span id="resultBox"></span></div>
+              <input id="uploadVideo-file" type="file" style="display:none;"/>
+              <div class="dlist3" id="uploadVideo"><img src="{MODULE_URL}/template/static/images/jia.gif" class="bmimg"></div>
+              <div id="showVideo" style="margin: 0px auto;"></div>
+
+            </div>
+        </div>
+    </form> 
+	<div class="cl-white pd-10 text-center">请如实填写报名信息，获取参赛资格！</div>
+	<div class="btn_bg_green bg-yellow">提交报名</div>
+</div>
+<div class="follow" id="follow" style="display:none">
+<div class="weui-mask"></div>
+<div id="guanzhubox" >
+	<div class="box1" onclick="hidemod('follow');">
+	<span class="span1">提示</span> 
+	<span class="span2" >关闭</span></div>
+	<div class="divtxt">
+	<p>长按下方二维码，长按，识别二维码</p>
+	<p><img src="{php echo $_W['account']['qrcode'];}" width="80%"></p>
+	{$reply['followguide']}
+	{if $_W['account']['subscribeurl']!=''}
+	<a href="{php echo $_W['account']['subscribeurl'];}" class="weui-btn weui-btn_primary">点击进入</a>
+	{/if}
+	
+	</div>
+</div>
+</div>
+
+
+<script>
+  // 上传视频
+  // 文档地址：https://cloud.tencent.com/document/product/266/9239
+  /**
+   * 计算签名
+   **/
+  var getSignature = function(callback){
+    $.ajax({
+      url: 'http://hd.guizu.me/app/index.php?i=3&c=entry&rid=39&do=sign&m=tyzm_diamondvote',
+      type: 'POST',
+      dataType: 'json',
+      success: function(res){
+        if(res.status==0 && res.signature) {
+          callback(res.signature);
+        } else {
+          return '获取签名失败';
+        }
+      }
+    });
+  };
+
+  $('#uploadVideo-file').on('change', function (e) {
+    $("#uploadVideo-file").attr("disabled", true)
+    var html = '&nbsp;&nbsp;&nbsp;<strong>视频开始上传 ，上传进度：<span name="videocurr">0%</span>；</strong>'
+    $("#resultBox").html(html)
+    var videoFile = this.files[0];
+    var resultMsg = qcVideo.ugcUploader.start({
+      videoFile: videoFile,
+      getSignature: getSignature,
+      allowAudio: 1,
+      success: function(result){
+       console.log("视频上传成功")
+      },
+      error: function(result){
+        $("#uploadVideo-file").attr("disabled", false)
+        var html = '&nbsp;&nbsp;&nbsp;<strong style="color:red">视频上传失败：'+result.msg+'</strong>'
+    	$("#resultBox").html(html)
+      },
+      progress: function(result){
+        $('[name=videocurr]').text(Math.floor(result.curr*100)+'%');
+      },
+      finish: function(result){
+        $('#uploadVideo').html("");
+        $('#uploadVideo').css("height", 0);
+        showVideo("showVideo", result.videoUrl)
+      }
+    });
+    if(resultMsg){
+      $("#uploadVideo-file").attr("disabled", false)
+      $("#resultBox").html("&nbsp;&nbsp;&nbsp;<strong style='color:red'>"+resultMsg+"</strong>")
+    }
+  });
+  $('#uploadVideo').on('click', function () {
+      $('#uploadVideo-file').click();
+  });
+  
+  // 播放视频
+  // 文档地址：https://cloud.tencent.com/document/product/454/7479
+  function showVideo(id, url) {
+    var options = {
+      mp4: 'http://1255850029.vod2.myqcloud.com/d15f48e4vodgzp1255850029/84bd71724564972818923857320/aazfW9JLKckA.mp4',
+      autoplay: false,
+      width: '480',
+      height: '320'
+    };
+
+    var player = new TcPlayer(id, options);
+    window.qcplayer = player;
+  }
+</script>
+
+<script>
+  
+       $(document).ready(function(){	
+{if $reply['upimgtype']=="" || $reply['upimgtype']==0}
+	  var images = {
+	       localId: [],
+	       serverId: []
+	     };
+		 
+
+	    $("#chooseImages").click(function(){
+	       wx.chooseImage({
+		      count:{$reply['maxupimg']}, // 默认9
+	          success: function (res) {
+				images.localId = res.localIds;
+				$("#chooseImages").html(""); 
+				for(var i=0;i < images.localId.length; i++){
+					$("#chooseImages").append("<img src='"+images.localId[i]+"' class='bmimg' />" + images.localId[i]);
+				}
+	          },
+	          fail: function(res) {
+				    //dialog2(res.errMsg);
+				    dialog2("请至公众号设置“js分享安全域名”！");
+			  }
+	       });
+		});
+
+
+
+
+
+
+{/if}
+
+
+
+	$(".btn_bg_green").click(function(){
+            var upimages=[];
+			var name=$("input[name='name']").val();
+			if(name==''){dialog2("请输入姓名");return false;}
+			var introduction=$("textarea[name='introduction']").val();
+			if(introduction==''){dialog2("参赛宣言不能为空！");return false;}
+		    {php echo $tplappye[1];}
+		     {if $reply['upimgtype']==1}
+				$("input[name='image[]']").each(  
+					function(index,e){  
+					upimages[index] = $(this).val();  
+					}  
+				);
+					var i = 0, length = upimages.length;
+				if(length < {$reply['minupimg']} || length > {$reply['maxupimg']}){
+				   var upimgtip={if $reply['minupimg']==$reply['maxupimg']}"请上传{$reply['maxupimg']}张图片。"{else}"请上传{$reply['minupimg']}-{$reply['maxupimg']}张图片"{/if};
+				   dialog2(upimgtip);return false;//1-5张照片
+				}
+
+                      //提交信息
+			            loadingToast("正在提交...");
+						$(this).unbind();
+						//提交报名
+						$.ajax({
+							type: "POST",
+							url: "{php echo $this->createMobileUrl('join', array('rid' => $reply['rid']))}",
+							data: {name:name,introduction:introduction,{php echo $tplappye[2];} picturearr:upimages},
+							dataType: "json",
+							success: function(str) {
+								hidemod("loadingToast");
+								if(str!=null && str!=''){
+									if(str.status == 1){
+										location.href="{php echo $this->createMobileUrl('view', array('rid' => $reply['rid']))}&id="+str.id;
+									}else if(str.status == 500){
+										$("#follow").show();
+									}else{
+										dialog2(str.msg);
+									}
+								}
+							},
+							error: function(err) {
+								hidemod("loadingToast");
+								dialog2("发生错误，请刷新后重试！");
+							}
+						});
+
+			//提交报名
+
+
+
+			{else}
+
+				var i = 0, length = images.localId.length;
+				if(length < {$reply['minupimg']} || length > {$reply['maxupimg']}){
+				   images.localId = [];
+				   var upimgtip={if $reply['minupimg']==$reply['maxupimg']}"请上传{$reply['maxupimg']}张图片。"{else}"请上传{$reply['minupimg']}-{$reply['maxupimg']}张图片"{/if};
+				   dialog2(upimgtip);return false;//1-5张照片
+				}
+			images.serverId = [];
+			function upload() {
+			  wx.uploadImage({
+				 localId: images.localId[i],
+				 isShowProgressTips:2,
+				 success: function (res) {
+				   i++; 
+				   images.serverId.push(res.serverId);
+				   if (i < length) {
+					  upload(); 
+				   } else {
+                      upimages=images.serverId;
+
+
+                      //提交信息
+			            loadingToast("正在提交...");
+						$(this).unbind();
+						//提交报名
+						$.ajax({
+							type: "POST",
+							url: "{php echo $this->createMobileUrl('join', array('rid' => $reply['rid']))}",
+							data: {name:name,introduction:introduction,{php echo $tplappye[2];} picturearr:upimages},
+							dataType: "json",
+							success: function(str) {
+								hidemod("loadingToast");
+								if(str!=null && str!=''){
+									if(str.status == 1){
+										location.href="{php echo $this->createMobileUrl('view', array('rid' => $reply['rid']))}&id="+str.id;
+									}else if(str.status == 500){
+										$("#follow").show();
+									}else{
+										dialog2(str.msg);
+									}
+								}
+							},
+							error: function(err) {
+								hidemod("loadingToast");
+								dialog2("发生错误，请刷新后重试！");
+							}
+						});
+
+			//提交报名
+                      //
+                      //
+
+	               }
+				 },
+				 fail: function (res) {
+					hidemod("loadingToast");
+					dialog2("发现错误，请重试");return false;
+				 }
+			  });
+			}
+		   upload();
+			{/if}
+	   
+	});
+	{if $nofollow==1}
+	     setTimeout($("#follow").show(),30000);//延时3秒 
+	{/if}
+ });
+</script>
+{template 'blue/footer'}
